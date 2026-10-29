@@ -1,5 +1,8 @@
-from fastapi import APIRouter
+from fastapi import APIRouter,Depends
+from sqlalchemy.ext.asyncio import AsyncSession,create_async_engine
 
+from config.db_conf import get_db
+from crud import news
 # 创建api router实例
 # prefix路由前缀(API接口规范文档)
 # tags分组标签
@@ -11,11 +14,13 @@ router = APIRouter(prefix="/api/news", tags=["news"])
 # 4.在路由处理函数里面调用crud封装好的响应结果
 
 @router.get("/categories")
-async def get_categories(skip:int=0, limit:int=100):
+async def get_categories(db:AsyncSession=Depends(get_db),skip:int=0, limit:int=100):
+    #先获取数据库里面的新闻分类数据->先定义模型类->封装查询数据的方法
+    categories=await news.get_categories(db,skip,limit)
     return {
         "code":200,
         "message":"获取新闻分类成功",
-        "data":"新闻分类列表"
+        "data":categories
     }
 
 
