@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, update
 from models.news import Category, News
 
 
@@ -21,7 +21,35 @@ async def get_news_detail(db:AsyncSession,news_id:int):
     stmt=select(News).where(News.id == news_id)
     result=await db.execute(stmt)
     return result.scalar_one_or_none()
+async def increase_news_views(db:AsyncSession,news_id:int):
+    stem=update(News).where(News.id==news_id).values(views=News.views + 1)
+    result=await db.execute(stem)
+    return db.commit()
 
+    #更新->检查数据库是否真的命中了数据->命中了返回True
+    return result.rowcount>0
+async def get_related_news(db:AsyncSession,category_id:int,news_id:int,limit:int=5):
+    #order by排序->浏览量和发布时间
+    stml=select(News).where(
+        News.id!=news_id,
+        News.category_id==category_id
+    ).order_by(News.views.desc(),#默认是升序，desc表示降序
+               News.publish_time.desc()
+    ).limit(limit)
+    result=await db.execute(stml)
+    # return result.scalars().all()
+    related_news=result.scalars().all()
+    #列表推导式推导出新闻的黑心数据然后再return
+    return [{
+        "id": news_detail.id,
+        "title": news_detail.title,
+        "content": news_detail.content,
+        "image": news_detail.image,
+        "author": news_detail.author,
+        "publish_time": news_detail.publish_time,
+        "category_id": news_detail.category_id,
+        "views": news_detail.views,
+    }for news_detail in related_news]
 
 
 

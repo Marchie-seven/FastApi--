@@ -1,5 +1,4 @@
-
-
+from docs.conf import release
 from fastapi import APIRouter,Depends,Query,HTTPException
 from sqlalchemy import null
 from sqlalchemy.ext.asyncio import AsyncSession,create_async_engine
@@ -48,12 +47,16 @@ async def get_news_list(
             "hasMore":has_more
         }
     }
-@router.get("/datail")
+@router.get("/detail")
 async def get_news_detail(news_id:int=Query(...,alias="id"),db:AsyncSession=Depends(get_db)):
     #获取新闻详情+浏览量+1+相关新闻
     news_detail=await news.get_news_detail(db,news_id)
     if not news_detail:
         raise HTTPException(status_code=404,detail="新闻不存在")
+    views_res=await news.increase_news_views(db,news_detail.id)
+    if not views_res:
+        raise HTTPException(status_code=404,detail="新闻不存在")
+    release_news=await news.get_related_news(db,news_detail.category_id,news_detail.id)
     return {
         "code":200,
         "message":"success",
@@ -66,7 +69,7 @@ async def get_news_detail(news_id:int=Query(...,alias="id"),db:AsyncSession=Depe
         "publish_time":news_detail.publish_time,
         "category_id":news_detail.category_id,
         "views":news_detail.views,
-        "relatedNews":[]
+        "relatedNews":release_news
     }
     }
 
