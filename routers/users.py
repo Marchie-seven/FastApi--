@@ -5,7 +5,7 @@ from schemas.users import UserRequest
 from config.db_conf import get_db
 from crud import users
 
-router=APIRouter(prefix="/api/user",tags=["users"])
+router=APIRouter(prefix="/api/users",tags=["users"])
 
 @router.post("/register")
 async def register(user_data:UserRequest,db:AsyncSession=Depends(get_db)):#用户信息和db
@@ -14,11 +14,12 @@ async def register(user_data:UserRequest,db:AsyncSession=Depends(get_db)):#用�
     if existing_user:
         raise HTTPException(status_code=400,detail="用户已存在")
     user=await users.create_user(db,user_data)
+    token=await users.create_token(db,user.id)
     return {
         "code":200,
         "message":"注册成功",
         "data":{
-            "token":"用户访问令牌",
+            "token":token,
             "userInfo":{
                 "id":user.id,
                 "username":user.username,
