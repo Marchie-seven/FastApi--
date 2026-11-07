@@ -20,12 +20,12 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     password: Mapped[str] = mapped_column(String(255), nullable=False)
     nickname: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    avatar: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    avatar: Mapped[Optional[str]] = mapped_column(String(255), nullable=True,default="https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg")
 
     gender: Mapped[str] = mapped_column(
         Enum("male", "female", "unknown"), default="unknown", nullable=False
     )
-    bio: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    bio: Mapped[Optional[str]] = mapped_column(String(500), nullable=True,default="这个人很懒什么都没有留下")
     phone: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.now, comment="创建时间"
