@@ -10,6 +10,7 @@ from models.users import User, UserToken
 from schemas.users import UserRequest
 from utils import security
 
+#根据用户名查询数据库
 async def get_user_by_username(db: AsyncSession,username:str):
     query=select(User).where(User.username==username)
     result=await db.execute(query)
@@ -42,29 +43,10 @@ async def create_token(db: AsyncSession,user_id:int):
         await db.commit()
     return token
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+async def authenticate_user(db: AsyncSession,username:str,password:str):
+    user=await get_user_by_username(db,username)
+    if not user:
+        return None
+    if not security.verify_password(password,user.password):
+        return None
+    return user
