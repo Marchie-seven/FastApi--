@@ -1,4 +1,5 @@
 from fastapi import APIRouter,Depends,HTTPException,Query
+from sqlalchemy.sql.functions import user
 from starlette.routing import Router
 from sqlalchemy.ext.asyncio import AsyncSession,create_async_engine
 from schemas.users import UserRequest, UserAuthResponse, UserInfoResponse
@@ -31,6 +32,11 @@ async def login(user_data:UserRequest,db:AsyncSession=Depends(get_db)):
     response_data=UserAuthResponse(token=token,user_info=UserInfoResponse.model_validate(user))
     return success_response(message='登录成功',data=response_data)
 
+#获取用户信息
+# 查Token查用户->封装crud->功能整合成一个工具函数->路由导入使用
+@router.get("/info")
+async def get_user_info():
+    return success_response(message='获取用户信息成功')
 
 
 
