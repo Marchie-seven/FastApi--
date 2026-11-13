@@ -8,7 +8,7 @@ from sqlalchemy import select, func, update
 from sqlalchemy.sql.functions import user
 
 from models.users import User, UserToken
-from schemas.users import UserRequest, UserUpdateRequest
+from schemas.users import UserRequest, UserUpdateRequest, UserChangeRequest
 from utils import security
 
 #根据用户名查询数据库
@@ -31,7 +31,7 @@ async def create_token(db: AsyncSession,user_id:int):
     #生成Token+设置过期时间->查询数据库当前用户是否有Token->有：更新：没有：添加
     token=str(uuid.uuid4())
     #timedelta(days=7,hours=2,minutes=30,seconds=10)
-    expires_at=datetime.now()+timedelta(minutes=7)
+    expires_at=datetime.now()+timedelta(days=7)
     query=select(UserToken).where(UserToken.user_id==user_id)
     result=await db.execute(query)
     user_token=result.scalar_one_or_none()
@@ -48,7 +48,13 @@ async def authenticate_user(db: AsyncSession,username:str,password:str):
     user=await get_user_by_username(db,username)
     if not user:
         return None
-    if not security.verify_password(password,user.password):
+    print("--- 正在进行登录校验 ---")
+    print("用户输入的明文密码:", password)
+    print("数据库中的加密密码:", user.password)
+    is_match = security.verify_password(password, user.password)
+    print("校验结果 (True/False):", is_match)
+
+    if not is_match:
         return None
     return user
 
@@ -80,6 +86,21 @@ async def update_user(db: AsyncSession,username:str,user_data:UserUpdateRequest)
     #获取用户的信息
     update_user=await get_user_by_username(db,username)
     return update_user
+
+#修改密码：验证旧密码->新密码加密->修改密码
+async def change_password(db: AsyncSession,user:User,old_password:str,new_password:str):
+    #验证旧密码
+    if not security.verify_password(old_password,user.password):
+        return False
+    hash_newpassword=security.get_hash_password(new_password)
+    user.password=hash_newpassword
+    #更新：由sqlalchemy真正接管这个user对象确保可以commit
+    #规避session过期或关闭导致不能提交的问题
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+    return True
+
 
 
 

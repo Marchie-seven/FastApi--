@@ -36,8 +36,10 @@ class UserUpdateRequest(BaseModel):
     gender: str=None
     bio: str=None
     phone: str=None
-
-
+#修改用户密码
+class UserChangeRequest(BaseModel):
+    old_password: str=Field(...,description="旧密码",alias="oldPassword")
+    new_password: str=Field(...,description="新密码",min_length=6,alias="newPassword")
 
 
 
