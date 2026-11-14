@@ -43,20 +43,26 @@ async def create_token(db: AsyncSession,user_id:int):
         db.add(user_token)
         await db.commit()
     return token
+async def authenticate_user(db: AsyncSession, username: str, password: str):
+        user = await get_user_by_username(db, username)
+        if not user:
+            return None
 
-async def authenticate_user(db: AsyncSession,username:str,password:str):
-    user=await get_user_by_username(db,username)
-    if not user:
-        return None
-    print("--- 正在进行登录校验 ---")
-    print("用户输入的明文密码:", password)
-    print("数据库中的加密密码:", user.password)
-    is_match = security.verify_password(password, user.password)
-    print("校验结果 (True/False):", is_match)
+        # 1. 先打印调试信息看看传进来的明文和库里的密文分别是什么
+        print("--- 正在进行登录校验 ---")
+        print("用户输入的明文密码:", password)
+        print("数据库中的加密密码:", user.password)
 
-    if not is_match:
-        return None
-    return user
+        # 2. 执行校验
+        is_match = security.verify_password(password, user.password)
+        print("校验结果 (True/False):", is_match)
+
+        # 3. 如果校验失败，返回 None
+        if not is_match:
+            return None
+
+        # 4. 校验成功，返回用户对象
+        return user
 
 #根据Token查询用户:验证Token->查询用户
 async def get_user_by_token(db: AsyncSession,token:str):
