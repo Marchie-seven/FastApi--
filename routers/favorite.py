@@ -3,7 +3,7 @@ from fastapi import APIRouter,Depends,HTTPException,status,Query
 import traceback
 from config.db_conf import AsyncSession, get_db
 from models.users import User
-from schemas.favorite import FavoriteCheckRequest, FavoriteAddRequest
+from schemas.favorite import FavoriteCheckRequest, FavoriteAddRequest, FavoriteListResponse
 from utils.auth import get_current_user
 from utils.response import success_response
 from crud import favorite
@@ -50,9 +50,23 @@ async def get_favorites(
         db:AsyncSession=Depends(get_db)
 ):
     rows,total=await favorite.get_favorite_list(db,user.id,page,page_size)
-    return success_response(message="获取收藏列表成功")
+    favorite_list=[{
+        **news.__dict__,
+        "favorite_time":favorite_time,
+        "favorite_id":favorite_id
+    }for news,favorite_time,favorite_id in rows]
+    has_more=total>page*page_size
 
+    data=FavoriteListResponse(list=favorite_list,total=total,hasMore=has_more)
+    return success_response(message="获取收藏列表成功",data=data)
 
+@router.delete("/clear")
+async def clear_favorite(
+        db:AsyncSession=Depends(get_db),
+        user:User=Depends(get_current_user),
+):
+    result=await favorite.remove_all_favorite(db,user.id)
+    return success_response(message=f"清空了{result}条收藏")
 
 
 
