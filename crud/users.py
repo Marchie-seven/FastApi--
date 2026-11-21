@@ -49,13 +49,9 @@ async def authenticate_user(db: AsyncSession, username: str, password: str):
             return None
 
         # 1. 先打印调试信息看看传进来的明文和库里的密文分别是什么
-        print("--- 正在进行登录校验 ---")
-        print("用户输入的明文密码:", password)
-        print("数据库中的加密密码:", user.password)
 
         # 2. 执行校验
-        is_match = security.verify_password(password, user.password)
-        print("校验结果 (True/False):", is_match)
+        is_match = security.verify_password (password, user.password)
 
         # 3. 如果校验失败，返回 None
         if not is_match:
