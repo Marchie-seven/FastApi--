@@ -17,7 +17,6 @@ async def add_history(
 ):
     date=await history.add_history(data.news_id,user,db)
     res_data=HistoryAddResponse.model_validate(date)
-
     return success_response(message="添加历史记录成功",data=res_data)
 
 @router.get("/list")
